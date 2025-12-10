@@ -66,3 +66,17 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         return res.status(401).json({ message: 'Token inválido ou expirado' });
     }
 }
+
+export function authorizeRoles(...allowedRoles: string[]) {
+    return (req: Request, res: Response, next: NextFunction) => {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Não autenticado' });
+        }
+
+        if (!allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({ message: 'Acesso negado: permissão insuficiente' });
+        }
+
+        return next();
+    };
+}

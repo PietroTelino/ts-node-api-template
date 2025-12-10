@@ -6,3 +6,4 @@ const controller = new AuthController();
 
 authRouter.post('/login', controller.login);
 authRouter.post('/refresh', controller.refresh);
+authRouter.post('/register', controller.register);

@@ -14,15 +14,6 @@ interface AuthResponse  {
     refreshToken: string;
 }
 
-// interface AccessTokenPayload extends JwtPayload {
-//     sub: number;
-//     role: string;
-// }
-
-// interface RefreshTokenPayload extends JwtPayload {
-//     sub: number;
-// }
-
 export class AuthService {
     private userRepo = new UserRepository();
 
