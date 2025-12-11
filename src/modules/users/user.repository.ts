@@ -1,5 +1,5 @@
-import { prisma } from "../../prisma";
-import type { User } from "../../generated/prisma/client";
+import { prisma } from '../../prisma';
+import type { User } from '../../generated/prisma/client';
 
 export class UserRepository {
     async findAll(): Promise<User[]> {
@@ -42,6 +42,15 @@ export class UserRepository {
     async delete(id: number): Promise<void> {
         await prisma.user.delete({
             where: { id },
+        });
+    }
+
+    async updatePassword(id: number, hashedPassword: string): Promise<User> {
+        return prisma.user.update({
+            where: { id },
+            data: {
+                password: hashedPassword,
+            },
         });
     }
 }

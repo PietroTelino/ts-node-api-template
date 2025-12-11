@@ -7,3 +7,5 @@ const controller = new AuthController();
 authRouter.post('/login', controller.login);
 authRouter.post('/refresh', controller.refresh);
 authRouter.post('/register', controller.register);
+authRouter.post('/forgot-password', controller.forgotPassword);
+authRouter.post('/reset-password', controller.resetPassword);
