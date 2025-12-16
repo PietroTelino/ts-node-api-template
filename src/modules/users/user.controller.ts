@@ -7,7 +7,6 @@ export class UserController {
     list = async (req: Request, res: Response) => {
         try {
             const users = await this.service.list();
-
             return res.json(users);
         } catch (err) {
             console.error(err);
@@ -17,7 +16,12 @@ export class UserController {
 
     getById = async (req: Request, res: Response) => {
         try {
-            const id = Number(req.params.id);
+            const { id } = req.params;
+
+            if (!id) {
+                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+            }
+
             const user = await this.service.getById(id);
 
             if (!user) {
@@ -29,11 +33,11 @@ export class UserController {
             console.error(err);
             return res.status(500).json({ message: 'Erro ao buscar usuário' });
         }
-    }
+    };
 
     create = async (req: Request, res: Response) => {
         try {
-            const { name, email, password, role, preferences } = req.body;            
+            const { name, email, password, role, preferences } = req.body;
 
             if (!name || !email || !password) {
                 return res.status(400).json({ message: 'name, email e password são obrigatórios.' });
@@ -50,8 +54,14 @@ export class UserController {
 
     update = async (req: Request, res: Response) => {
         try {
-            const id = Number(req.params.id);
+            const { id } = req.params;
+
+            if (!id) {
+                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+            }
+
             const { name, email } = req.body;
+
             const user = await this.service.update(id, { name, email });
 
             return res.json(user);
@@ -59,11 +69,16 @@ export class UserController {
             console.error(err);
             return res.status(400).json({ message: err.message || 'Erro ao atualizar usuário' });
         }
-    }
+    };
 
     delete = async (req: Request, res: Response) => {
         try {
-            const id = Number(req.params.id);
+            const { id } = req.params;
+
+            if (!id) {
+                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+            }
+
             await this.service.delete(id);
 
             return res.status(204).send();
@@ -71,5 +86,5 @@ export class UserController {
             console.error(err);
             return res.status(400).json({ message: err.message || 'Erro ao deletar usuário' });
         }
-    }
+    };
 }

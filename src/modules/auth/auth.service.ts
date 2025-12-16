@@ -8,7 +8,7 @@ interface LoginInput {
     password: string;
 }
 
-interface AuthResponse  {
+interface AuthResponse {
     user: Omit<User, 'password'>;
     accessToken: string;
     refreshToken: string;
@@ -111,15 +111,11 @@ export class AuthService {
             throw new Error('Refresh token malformado');
         }
 
-        const userId = Number(payload.sub);
-
-        if (Number.isNaN(userId)) {
-            throw new Error('ID de usuário inválido no token');
-        }
+        const userId = String(payload.sub);
 
         const user = await this.userRepo.findById(userId);
 
-        if(!user) {
+        if (!user) {
             throw new Error('Usuário não encontrado');
         }
 

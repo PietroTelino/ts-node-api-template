@@ -2,7 +2,7 @@ import { prisma } from '../../prisma';
 import type { PasswordReset, User } from '../../generated/prisma/client';
 
 export class PasswordResetRepository {
-    async create(userId: number, token: string, expiresAt: Date): Promise<PasswordReset> {
+    async create(userId: string, token: string, expiresAt: Date): Promise<PasswordReset> {
         return prisma.passwordReset.create({
             data: {
                 userId,
@@ -27,7 +27,7 @@ export class PasswordResetRepository {
         });
     }
 
-    async markAsUsed(id: number): Promise<void> {
+    async markAsUsed(id: string): Promise<void> {
         await prisma.passwordReset.update({
             where: { id },
             data: { usedAt: new Date() },

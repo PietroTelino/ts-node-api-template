@@ -4,11 +4,11 @@ import type { User } from '../../generated/prisma/client';
 export class UserRepository {
     async findAll(): Promise<User[]> {
         return prisma.user.findMany({
-            orderBy: { id: 'asc' },
+            orderBy: { createdAt: 'asc' },
         });
     }
 
-    async findById(id: number): Promise<User | null> {
+    async findById(id: string): Promise<User | null> {
         return prisma.user.findUnique({
             where: { id },
         });
@@ -32,20 +32,20 @@ export class UserRepository {
         });
     }
 
-    async update(id: number, data: { name?:string; email?: string }): Promise<User> {
+    async update(id: string, data: { name?: string; email?: string }): Promise<User> {
         return prisma.user.update({
             where: { id },
-            data
+            data,
         });
     }
 
-    async delete(id: number): Promise<void> {
+    async delete(id: string): Promise<void> {
         await prisma.user.delete({
             where: { id },
         });
     }
 
-    async updatePassword(id: number, hashedPassword: string): Promise<User> {
+    async updatePassword(id: string, hashedPassword: string): Promise<User> {
         return prisma.user.update({
             where: { id },
             data: {

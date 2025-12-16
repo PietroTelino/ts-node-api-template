@@ -5,7 +5,7 @@ declare global {
     namespace Express {
         interface Request {
             user?: {
-                id: number;
+                id: string;
                 role: string;
             }
         }
@@ -45,14 +45,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
             return res.status(401).json({ message: 'Token malformado' });
         }
 
-        const userId = typeof payload.sub === 'string'
-            ? Number(payload.sub)
-            : payload.sub;
-
-        if (Number.isNaN(userId)) {
-            return res.status(401).json({ message: 'ID de usuário inválido no token' });
-        }
-
+        const userId = String(payload.sub);
         const role = (payload as any).role ?? 'user';
 
         req.user = {

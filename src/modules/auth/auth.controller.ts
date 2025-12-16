@@ -55,6 +55,7 @@ export class AuthController {
                 email,
                 password,
                 role: 'user',
+                preferences,
             });
 
             const authResult = await this.service.login({ email, password });

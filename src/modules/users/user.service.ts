@@ -9,7 +9,7 @@ export class UserService {
         return this.repo.findAll();
     }
 
-    getById(id: number): Promise<User | null> {
+    getById(id: string): Promise<User | null> {
         return this.repo.findById(id);
     }
 
@@ -26,12 +26,11 @@ export class UserService {
         });
     }
 
-    update(id: number, input: { name?: string; email?: string }): Promise<User> {
+    update(id: string, input: { name?: string; email?: string }): Promise<User> {
         return this.repo.update(id, input);
     }
 
-
-    delete(id: number): Promise<void> {
+    delete(id: string): Promise<void> {
         return this.repo.delete(id);
     }
 }

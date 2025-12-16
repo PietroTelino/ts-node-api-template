@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-    id            Int       @id @default(autoincrement())
+    id            String    @id @default(uuid()) @db.Uuid
     name          String
     email         String    @unique
     password      String
@@ -21,15 +21,14 @@ model User {
 
     preferences   Json?     @map("preferences")
 
-    // relação com resets de senha
     passwordResets PasswordReset[]
 
     @@map("users")
 }
 
 model PasswordReset {
-    id        Int       @id @default(autoincrement())
-    userId    Int       @map("user_id")
+    id        String    @id @default(uuid()) @db.Uuid
+    userId    String    @map("user_id") @db.Uuid
     user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     token     String    @unique
