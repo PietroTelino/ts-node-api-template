@@ -87,4 +87,25 @@ export class UserController {
             return res.status(400).json({ message: err.message || 'Erro ao deletar usuário' });
         }
     };
+
+    updateMyPreferences = async (req: Request, res: Response) => {
+        try {
+            if (!req.user) {
+                return res.status(401).json({ message: 'Usuário não autenticado.' });
+            }
+
+            const { theme } = req.body;
+
+            if (!theme) {
+                return res.status(400).json({ message: 'O tema é obrigatório, podendo ser light ou dark.' });
+            }
+
+            const result = await this.service.updateMyTheme(req.user.id, theme);
+
+            return res.json(result);
+        } catch (err: any) {
+            console.error(err);
+            return res.status(400).json({ message: err.message || 'Erro ao atualizar preferências.' });
+        }
+    };
 }

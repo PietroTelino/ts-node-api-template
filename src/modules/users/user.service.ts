@@ -1,11 +1,15 @@
-import { UserRepository } from './user.repository';
+import { UserRepository, SafeUser } from './user.repository';
 import type { User } from '../../generated/prisma/client';
 import bcrypt from 'bcrypt';
+import { validatePasswordOrThrow } from '../auth/password.policy';
+import { validateEmailOrThrow } from '../auth/email.policy';
+
+type Theme = 'light' | 'dark';
 
 export class UserService {
     private repo = new UserRepository();
 
-    list(): Promise<User[]> {
+    list(): Promise<SafeUser[]> {
         return this.repo.findAll();
     }
 
@@ -14,11 +18,14 @@ export class UserService {
     }
 
     async create(input: { name: string; email: string; password: string; role?: string; preferences?: any }): Promise<User> {
-        const hashedPassword = await bcrypt.hash(input.password, 10);
-
         if (!input.name || !input.email) {
             throw new Error('Name e email são obrigatórios');
         }
+
+        validateEmailOrThrow(input.email);
+        validatePasswordOrThrow(input.password);
+
+        const hashedPassword = await bcrypt.hash(input.password, 10);
 
         return this.repo.create({
             ...input,
@@ -27,10 +34,38 @@ export class UserService {
     }
 
     update(id: string, input: { name?: string; email?: string }): Promise<User> {
+        if (input.email) {
+            validateEmailOrThrow(input.email);
+            input.email = input.email.trim().toLowerCase();
+        }
+
         return this.repo.update(id, input);
     }
 
     delete(id: string): Promise<void> {
         return this.repo.delete(id);
+    }
+
+    async updateMyTheme(id: string, theme: Theme): Promise<{ preferences: { theme: Theme } }> {
+        if (theme !== 'light' && theme !== 'dark') {
+            throw new Error('O tema deve ser light ou dark.');
+        }
+
+        const user = await this.repo.findById(id);
+
+        if (!user) {
+            throw new Error('Usuário não encontrado');
+        }
+
+        const currentPrefs = (user.preferences ?? {}) as Record<string, any>;
+
+        const newPreferences = {
+            ...currentPrefs,
+            theme,
+        };
+
+        await this.repo.updatePreferences(id, newPreferences);
+
+        return { preferences: { theme } };
     }
 }

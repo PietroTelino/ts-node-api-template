@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { UserRepository } from '../users/user.repository';
 import { PasswordResetRepository } from './password-reset.repository';
 import { EmailService } from '../notifications/email.service';
+import { validatePasswordOrThrow } from './password.policy';
 
 export class PasswordResetService {
     private userRepo = new UserRepository();
@@ -35,6 +36,8 @@ export class PasswordResetService {
         if (!record) {
             throw new Error('Token invalido ou expirado');
         }
+
+        validatePasswordOrThrow(newPassword);
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 

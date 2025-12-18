@@ -1,10 +1,22 @@
 import { prisma } from '../../prisma';
 import type { User } from '../../generated/prisma/client';
 
+export type SafeUser = Omit<User, 'password' | 'preferences'>;
+
 export class UserRepository {
-    async findAll(): Promise<User[]> {
+    async findAll(): Promise<SafeUser[]> {
         return prisma.user.findMany({
             orderBy: { createdAt: 'asc' },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                inactivatedAt: true,
+                deletedAt: true,
+                createdAt: true,
+                updatedAt: true,
+            },
         });
     }
 
@@ -51,6 +63,13 @@ export class UserRepository {
             data: {
                 password: hashedPassword,
             },
+        });
+    }
+
+    async updatePreferences(id: string, preferences: any): Promise<User> {
+        return prisma.user.update({
+            where: { id },
+            data: { preferences },
         });
     }
 }

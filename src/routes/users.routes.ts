@@ -7,6 +7,7 @@ const controller = new UserController();
 
 usersRouter.use(authMiddleware);
 
+usersRouter.patch('/me/preferences', controller.updateMyPreferences);
 usersRouter.get('/', authorizeRoles('administrator', 'god'), controller.list);
 usersRouter.get('/:id', authorizeRoles('administrator', 'god'), controller.getById);
 usersRouter.post('/', authorizeRoles('administrator', 'god'), controller.create);
