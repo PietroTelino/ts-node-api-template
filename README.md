@@ -48,26 +48,58 @@ pnpm install
 
 ## ⚙️ Environment Variables
 
-Create a `.env` file in the root directory and configure:
+This project uses atomic database variables and automatically builds the
+DATABASE_URL internally.
 
+Create a .env file in the root directory based on .env.example.
+
+### 1. Required variables
 ```env
-# Required
-DATABASE_URL="postgresql://<USER>:<PASSWORD>@localhost:5432/<DB_NAME>?schema=public"
-
-# Server
-PORT=3000
-
-# JWT
-JWT_SECRET="your-access-token-secret"
-JWT_REFRESH_SECRET="your-refresh-token-secret"
-JWT_EXPIRES_IN_SECONDS=900            # 15 minutes
-JWT_REFRESH_EXPIRES_IN_SECONDS=604800 # 7 days
-
-# Bcrypt
-BCRYPT_SALT_ROUNDS=10
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=surveys-api-node-ts
+DB_USER=postgres
+DB_PASSWORD=root
 ```
 
-> Ensure that your `DATABASE_URL` matches your PostgreSQL credentials and database name.
+The application will internally generate the following connection string:
+```txt
+postgresql://DB_USER:DB_PASSWORD@DB_HOST:DB_PORT/DB_NAME?schema=public
+```
+
+This generated URL is used by:
+
+• Prisma Client (runtime)
+
+• Prisma migrations
+
+• Prisma Studio
+
+### 2. Required variables
+If you prefer to define the connection string manually, you can still set:
+```env
+DATABASE_URL=postgresql://postgres:root@localhost:5432/surveys-api-node-ts?schema=public
+```
+
+### 3. Authentication (JWT)
+```env
+JWT_SECRET=your-access-token-secret
+JWT_EXPIRES_IN_SECONDS=900            # 15 minutes
+
+JWT_REFRESH_SECRET=your-refresh-token-secret
+JWT_REFRESH_EXPIRES_IN_SECONDS=604800 # 7 days
+```
+
+### 4. Seed User (GOD)
+A privileged user can be created automatically via Prisma seed:
+```env
+GOD_EMAIL=god@god.com
+GOD_PASSWORD=12345678
+```
+Run:
+```bash
+npm run seed
+```
 
 ---
 
@@ -137,21 +169,18 @@ The server will run on the port defined in your `.env` file (default: **3000**).
 .
 ├── prisma
 │   ├── migrations/
-│   └── schema.prisma
+│   ├── schema.prisma
+│   └── seed.ts
 │
 ├── src
 │   ├── config
-│   │   └── env.ts
+│   │   ├── env.ts
+│   │   └── database.ts
 │   │
 │   ├── modules
 │   │   ├── auth
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── auth.middleware.ts
-│   │   │   ├── auth.routes.ts
-│   │   │   └── auth.service.ts
-│   │   │
-│   │   └── users
-│   │       └── (future user module)
+│   │   ├── users
+│   │   └── notifications
 │   │
 │   ├── routes
 │   │   ├── index.ts
@@ -162,6 +191,8 @@ The server will run on the port defined in your `.env` file (default: **3000**).
 │   └── server.ts
 │
 ├── .env
+├── .env.example
+├── prisma.config.ts
 ├── package.json
 ├── tsconfig.json
 └── README.md
