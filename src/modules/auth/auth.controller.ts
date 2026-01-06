@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { UserService } from '../users/user.service';
 import { PasswordResetService } from './password-reset.service';
+import { LogoutService } from './logout.service';
 
 export class AuthController {
     private service = new AuthService();
@@ -22,6 +23,37 @@ export class AuthController {
         } catch (err: any) {
             console.error(err);
             return res.status(401).json({ message: err.message || "Credenciais inválidas" });
+        }
+    };
+
+    async logout(req: Request, res: Response): Promise<Response> {
+        const refreshToken =
+            req.body.refreshToken ||
+            req.cookies?.refreshToken ||
+            req.headers['x-refresh-token'];
+        
+        const logoutService = new LogoutService();
+
+        await logoutService.execute(refreshToken as string);
+
+        res.clearCookie('refreshToken');
+
+        return res.status(204).send();
+    }
+
+    logoutAll = async (req: Request, res: Response) => {
+        try {
+            if (!req.user) {
+                return res.status(401).json({ message: 'Não autenticado' });
+            }
+
+            const logoutService = new LogoutService();
+
+            await logoutService.logoutAll(req.user.id);
+
+            return res.status(204).send();
+        } catch (err: any) {
+            return res.status(400).json({ message: err.message || 'Erro ao realizar logout global' });
         }
     };
 

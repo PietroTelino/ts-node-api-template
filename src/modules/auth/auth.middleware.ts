@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { env } from '../../config/env';
 
 declare global {
     namespace Express {
@@ -7,9 +8,15 @@ declare global {
             user?: {
                 id: string;
                 role: string;
-            }
+                token?: string;
+            };
         }
     }
+}
+
+interface AccessTokenPayload extends JwtPayload {
+    sub: string;
+    role?: string;
 }
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
@@ -25,37 +32,33 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         return res.status(401).json({ message: 'Formato de token inválido' });
     }
 
-    const secret = process.env.JWT_SECRET;
-
-    if (!secret) {
-        console.error('JWT_SECRET não está definido');
+    if (!env.jwtSecret) {
+        console.error('[AuthMiddleware] JWT_SECRET não configurado');
         return res.status(500).json({ message: 'Erro de configuração do servidor' });
     }
 
     try {
-        const decoded = jwt.verify(token, secret);
+        const decoded = jwt.verify(token, env.jwtSecret);
 
         if (typeof decoded === 'string') {
             return res.status(401).json({ message: 'Token inválido' });
         }
 
-        const payload = decoded as JwtPayload;
+        const payload = decoded as AccessTokenPayload;
 
         if (!payload.sub) {
             return res.status(401).json({ message: 'Token malformado' });
         }
 
-        const userId = String(payload.sub);
-        const role = (payload as any).role ?? 'user';
-
         req.user = {
-            id: userId,
-            role,
+            id: payload.sub,
+            role: payload.role ?? 'user',
+            token,
         };
 
         return next();
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error('[AuthMiddleware]', error);
         return res.status(401).json({ message: 'Token inválido ou expirado' });
     }
 }
@@ -67,7 +70,9 @@ export function authorizeRoles(...allowedRoles: string[]) {
         }
 
         if (!allowedRoles.includes(req.user.role)) {
-            return res.status(403).json({ message: 'Acesso negado: permissão insuficiente' });
+            return res
+                .status(403)
+                .json({ message: 'Acesso negado: permissão insuficiente' });
         }
 
         return next();

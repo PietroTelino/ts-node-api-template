@@ -13,6 +13,11 @@ export const env = {
 
     databaseUrl: process.env.DATABASE_URL,
 
+    jwtSecret: process.env.JWT_SECRET as string,
+    jwtExpiresIn: Number(process.env.JWT_EXPIRES_IN_SECONDS) ?? 900,
+    jwtRefreshSecret: process.env.JWT_REFRESH_SECRET as string,
+    jwtRefreshExpiresInSeconds: Number(process.env.JWT_REFRESH_EXPIRES_IN_SECONDS) ?? 604800,
+
     emailEnabled: process.env.EMAIL_ENABLED === 'true',
     emailHost: process.env.EMAIL_HOST,
     emailPort: Number(process.env.EMAIL_PORT ?? 587),

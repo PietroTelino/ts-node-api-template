@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions, JwtPayload } from 'jsonwebtoken';
 import { UserRepository } from '../users/user.repository';
+import { RefreshTokenRepository } from './refresh-token.repository';
 import type { User } from '../../generated/prisma/client';
 
 interface LoginInput {
@@ -16,65 +17,46 @@ interface AuthResponse {
 
 export class AuthService {
     private userRepo = new UserRepository();
+    private refreshTokenRepo = new RefreshTokenRepository();
 
-    private accessSecret = process.env.JWT_SECRET;
-    private refreshSecret = process.env.JWT_REFRESH_SECRET;
+    private accessSecret = process.env.JWT_SECRET!;
+    private refreshSecret = process.env.JWT_REFRESH_SECRET!;
     private accessExpiresInSeconds = Number(process.env.JWT_EXPIRES_IN_SECONDS ?? 900);
-    private refreshExpiresInSeconds = Number(process.env.JWT_REFRESH_EXPIRES_IN_SECONDS ?? 60 * 60 * 24 * 7);
-
-    constructor() {
-        if (!this.accessSecret) {
-            throw new Error('JWT_SECRET não está definido');
-        }
-        if (!this.refreshSecret) {
-            throw new Error('JWT_REFRESH_SECRET não está definido');
-        }
-    }
+    private refreshExpiresInSeconds = Number(
+        process.env.JWT_REFRESH_EXPIRES_IN_SECONDS ?? 60 * 60 * 24 * 7
+    );
 
     private generateAccessToken(user: User): string {
-        const options: SignOptions = {
-            expiresIn: this.accessExpiresInSeconds,
-        };
-
         return jwt.sign(
-            {
-                sub: user.id,
-                role: user.role,
-            },
-            this.accessSecret as string,
-            options
+            { sub: user.id, role: user.role },
+            this.accessSecret,
+            { expiresIn: this.accessExpiresInSeconds }
         );
     }
 
     private generateRefreshToken(user: User): string {
-        const options: SignOptions = {
-            expiresIn: this.refreshExpiresInSeconds,
-        };
-
         return jwt.sign(
-            {
-                sub: user.id,
-            },
-            this.refreshSecret as string,
-            options
+            { sub: user.id },
+            this.refreshSecret,
+            { expiresIn: this.refreshExpiresInSeconds }
         );
     }
 
     async login({ email, password }: LoginInput): Promise<AuthResponse> {
         const user = await this.userRepo.findByEmail(email);
 
-        if (!user) {
-            throw new Error('Credenciais inválidas');
-        }
-
-        const passwordMatch = await bcrypt.compare(password, user.password);
-
-        if (!passwordMatch) {
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             throw new Error('Credenciais inválidas');
         }
 
         const accessToken = this.generateAccessToken(user);
         const refreshToken = this.generateRefreshToken(user);
+
+        await this.refreshTokenRepo.create({
+            userId: user.id,
+            token: refreshToken,
+            expiresAt: new Date(Date.now() + this.refreshExpiresInSeconds * 1000),
+        });
 
         const { password: _, ...userWithoutPassword } = user;
 
@@ -93,17 +75,8 @@ export class AuthService {
         let payload: JwtPayload;
 
         try {
-            const decoded = jwt.verify(
-                refreshToken,
-                this.refreshSecret as string
-            );
-
-            if (typeof decoded === 'string') {
-                throw new Error('Formato de token inválido');
-            }
-
-            payload = decoded as JwtPayload;
-        } catch (error) {
+            payload = jwt.verify(refreshToken, this.refreshSecret) as JwtPayload;
+        } catch {
             throw new Error('Refresh token inválido ou expirado');
         }
 
@@ -111,22 +84,38 @@ export class AuthService {
             throw new Error('Refresh token malformado');
         }
 
-        const userId = String(payload.sub);
+        const tokenRecord = await this.refreshTokenRepo.findByToken(refreshToken);
 
-        const user = await this.userRepo.findById(userId);
+        if (
+            !tokenRecord ||
+            tokenRecord.revoked ||
+            tokenRecord.expiresAt < new Date()
+        ) {
+            throw new Error('Refresh token inválido');
+        }
+
+        const user = await this.userRepo.findById(String(payload.sub));
 
         if (!user) {
             throw new Error('Usuário não encontrado');
         }
 
-        const accessToken = this.generateAccessToken(user);
+        await this.refreshTokenRepo.revoke(refreshToken);
+
+        const newAccessToken = this.generateAccessToken(user);
         const newRefreshToken = this.generateRefreshToken(user);
+
+        await this.refreshTokenRepo.create({
+            userId: user.id,
+            token: newRefreshToken,
+            expiresAt: new Date(Date.now() + this.refreshExpiresInSeconds * 1000),
+        });
 
         const { password: _, ...userWithoutPassword } = user;
 
         return {
             user: userWithoutPassword,
-            accessToken,
+            accessToken: newAccessToken,
             refreshToken: newRefreshToken,
         };
     }
