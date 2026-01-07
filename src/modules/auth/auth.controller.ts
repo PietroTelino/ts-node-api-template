@@ -14,7 +14,7 @@ export class AuthController {
             const { email, password } = req.body;
 
             if (!email || !password) {
-                return res.status(400).json({ message: "email e password são obrigatórios." });
+                return res.status(400).json({ message: 'email e password são obrigatórios.' });
             }
 
             const result = await this.service.login({ email, password });
@@ -22,7 +22,7 @@ export class AuthController {
             return res.json(result);
         } catch (err: any) {
             console.error(err);
-            return res.status(401).json({ message: err.message || "Credenciais inválidas" });
+            return res.status(401).json({ message: err.message || 'Credenciais inválidas' });
         }
     };
 

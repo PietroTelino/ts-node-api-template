@@ -6,7 +6,7 @@ async function main() {
     const godPassword = process.env.GOD_PASSWORD ?? 'adminadmin';
 
     if (!godEmail.includes('@')) {
-        throw new Error("GOD_EMAIL inválido");
+        throw new Error('GOD_EMAIL inválido');
     }
 
     const passwordHash = await bcrypt.hash(godPassword, 10);
@@ -22,14 +22,14 @@ async function main() {
 
     await prisma.user.create({
         data: {
-            name: "God User",
+            name: 'God User',
             email: godEmail,
             password: passwordHash,
-            role: "god",
+            role: 'god',
         },
     });
 
-    console.log("Usuário GOD criado com sucesso!");
+    console.log('Usuário GOD criado com sucesso!');
 }
 
 main()
