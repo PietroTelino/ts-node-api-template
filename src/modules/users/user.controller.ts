@@ -71,6 +71,19 @@ export class UserController {
         }
     };
 
+    changeMyPassword = async (req: Request, res: Response) => {
+        try {
+            if (!req.user) {
+                return res.status(401).json({ message: 'Usuário não autenticado.' });
+            }
+        } catch (err: any) {
+            console.error(err);
+            return res.status(400).json({
+                message: err.message || 'Erro ao alterar senha',
+            });
+        }
+    };
+
     delete = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;

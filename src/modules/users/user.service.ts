@@ -3,6 +3,7 @@ import type { User } from '../../generated/prisma/client';
 import bcrypt from 'bcrypt';
 import { validatePasswordOrThrow } from '../auth/password.policy';
 import { validateEmailOrThrow } from '../auth/email.policy';
+import { RefreshTokenRepository } from '../auth/refresh-token.repository';
 
 type Theme = 'light' | 'dark';
 
@@ -40,6 +41,29 @@ export class UserService {
         }
 
         return this.repo.update(id, input);
+    }
+
+    async changeMyPassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+        const user = await this.repo.findById(userId);
+
+        if (!user) {
+            throw new Error('Usuário não encontrado');
+        }
+
+        const passwordMatches = await bcrypt.compare(currentPassword, user.password);
+
+        if (!passwordMatches) {
+            throw new Error('Senha atual incorreta');
+        }
+
+        validatePasswordOrThrow(newPassword);
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await this.repo.updatePassword(userId, hashedPassword);
+
+        const refreshTokenRepo = new RefreshTokenRepository();
+        await refreshTokenRepo.revokeAllByUser(userId);
     }
 
     delete(id: string): Promise<void> {
