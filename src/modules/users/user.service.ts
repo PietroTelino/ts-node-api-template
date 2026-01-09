@@ -1,14 +1,33 @@
 import { UserRepository, SafeUser } from './user.repository';
 import type { User } from '../../generated/prisma/client';
 import bcrypt from 'bcrypt';
-import { validatePasswordOrThrow } from '../auth/password.policy';
-import { validateEmailOrThrow } from '../auth/email.policy';
+import { validatePasswordOrThrow } from './policies/password.policy';
+import { validateEmailOrThrow } from './policies/email.policy';
 import { RefreshTokenRepository } from '../auth/refresh-token.repository';
 
 type Theme = 'light' | 'dark';
 
 export class UserService {
     private repo = new UserRepository();
+
+    async register(data: any) {
+        validateEmailOrThrow(data.email);
+        validatePasswordOrThrow(data.password);
+
+        const exists = await this.repo.findByEmail(data.email);
+
+        if (exists) {
+            throw new Error('Email already in use');
+        }
+
+        const user = await this.repo.create(data);
+
+        return {
+            id: user.id,
+            email: user.email,
+            createdAt: user.createdAt,
+        };
+    }
 
     list(): Promise<SafeUser[]> {
         return this.repo.findAll();

@@ -9,6 +9,3 @@ authRouter.post('/login', controller.login);
 authRouter.post('/refresh', controller.refresh);
 authRouter.post('/logout', authMiddleware, controller.logout);
 authRouter.post('/logout-all', authMiddleware, controller.logoutAll);
-authRouter.post('/register', controller.register);
-authRouter.post('/forgot-password', controller.forgotPassword);
-authRouter.post('/reset-password', controller.resetPassword);

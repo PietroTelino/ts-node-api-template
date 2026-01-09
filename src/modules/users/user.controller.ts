@@ -1,8 +1,16 @@
 import { Request, Response } from 'express';
 import { UserService } from './user.service';
+import bcrypt from 'bcrypt';
+import { validatePasswordOrThrow } from './policies/password.policy';
 
 export class UserController {
     private service = new UserService();
+
+    register = async (req: Request, res: Response) => {
+        const user = await this.service.register(req.body);
+
+        return res.status(201).json(user);
+    };
 
     list = async (req: Request, res: Response) => {
         try {
@@ -71,11 +79,17 @@ export class UserController {
         }
     };
 
-    changeMyPassword = async (req: Request, res: Response) => {
+    changeMyPassword = async (req: Request, res: Response) => {        
         try {
-            if (!req.user) {
+            const { currentPassword, newPassword } = req.body;
+
+            if (!req.user || !currentPassword || !newPassword) {
                 return res.status(401).json({ message: 'Usuário não autenticado.' });
             }
+
+            await this.service.changeMyPassword(req.user.id, currentPassword, newPassword);
+
+            return res.status(200).json({ message: 'Senha alterada com sucesso.' });
         } catch (err: any) {
             console.error(err);
             return res.status(400).json({
