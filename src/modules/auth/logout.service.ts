@@ -1,4 +1,4 @@
-import { RefreshTokenRepository } from './refresh-token.repository';
+import { RefreshTokenRepository } from './tokens/refresh-token.repository';
 
 export class LogoutService {
     constructor(private refreshTokenRepository = new RefreshTokenRepository()) {}

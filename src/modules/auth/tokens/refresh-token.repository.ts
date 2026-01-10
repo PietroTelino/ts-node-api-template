@@ -1,5 +1,5 @@
-import { RefreshToken } from "../../generated/prisma/client";
-import { prisma } from "../../prisma";
+import { RefreshToken } from '../../../generated/prisma/client';
+import { prisma } from '../../../prisma';
 
 export class RefreshTokenRepository {
     async create(data: {

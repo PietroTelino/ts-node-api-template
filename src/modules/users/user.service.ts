@@ -3,7 +3,7 @@ import type { User } from '../../generated/prisma/client';
 import bcrypt from 'bcrypt';
 import { validatePasswordOrThrow } from './policies/password.policy';
 import { validateEmailOrThrow } from './policies/email.policy';
-import { RefreshTokenRepository } from '../auth/refresh-token.repository';
+import { RefreshTokenRepository } from '../auth/tokens/refresh-token.repository'
 
 type Theme = 'light' | 'dark';
 

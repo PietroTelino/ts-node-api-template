@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
-import { prisma } from '../../prisma';
-import { env } from '../../config/env';
+import { prisma } from '../../../prisma';
+import { env } from '../../../config/env';
 
 interface RefreshTokenPayload {
     accessToken: string;

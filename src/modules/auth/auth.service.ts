@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions, JwtPayload } from 'jsonwebtoken';
 import { UserRepository } from '../users/user.repository';
-import { RefreshTokenRepository } from './refresh-token.repository';
+import { RefreshTokenRepository } from './tokens/refresh-token.repository';
 import type { User } from '../../generated/prisma/client';
 
 interface LoginInput {
