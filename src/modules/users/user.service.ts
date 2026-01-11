@@ -10,17 +10,22 @@ type Theme = 'light' | 'dark';
 export class UserService {
     private repo = new UserRepository();
 
-    async register(data: any) {
-        validateEmailOrThrow(data.email);
-        validatePasswordOrThrow(data.password);
+    async register(input: { name: string; email: string; password: string; preferences?: any }) {
+        validateEmailOrThrow(input.email);
+        validatePasswordOrThrow(input.password);
 
-        const exists = await this.repo.findByEmail(data.email);
+        const exists = await this.repo.findByEmail(input.email);
 
         if (exists) {
             throw new Error('Email already in use');
         }
 
-        const user = await this.repo.create(data);
+        const hashedPassword = await bcrypt.hash(input.password, 10);
+
+        const user = await this.repo.create({
+            ...input,
+            password: hashedPassword,
+        });
 
         return {
             id: user.id,
@@ -83,6 +88,22 @@ export class UserService {
 
         const refreshTokenRepo = new RefreshTokenRepository();
         await refreshTokenRepo.revokeAllByUser(userId);
+    }
+
+    async selfDelete(id: string, password: string): Promise<void> {
+        const user = await this.getById(id);
+
+        if (!user) {
+            throw new Error('Usuário não autenticado');
+        }
+
+        const passwordMatches = await bcrypt.compare(password, user.password);
+
+        if (!passwordMatches) {
+            throw new Error('A senha informada está incorreta');
+        }
+
+        return this.repo.delete(id);
     }
 
     delete(id: string): Promise<void> {

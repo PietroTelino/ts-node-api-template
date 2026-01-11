@@ -7,9 +7,20 @@ export class UserController {
     private service = new UserService();
 
     register = async (req: Request, res: Response) => {
-        const user = await this.service.register(req.body);
+        try {
+            const { name, email, password, preferences } = req.body;
 
-        return res.status(201).json(user);
+            if (!name || !email || !password) {
+                return res.status(400).json({ message: 'name, email e password são obrigatórios.' });
+            }
+
+            const user = await this.service.register({ name, email, password, preferences });
+
+            return res.status(201).json(user);
+        } catch (error: any) {
+            console.error(error);
+            return res.status(400).json({ message: error.message || 'Erro ao registrar usuário' });    
+        }        
     };
 
     list = async (req: Request, res: Response) => {
@@ -95,6 +106,23 @@ export class UserController {
             return res.status(400).json({
                 message: err.message || 'Erro ao alterar senha',
             });
+        }
+    };
+
+    selfDelete = async (req: Request, res: Response) => {
+        try {
+            const { password } = req.body;
+
+            if (!req.user || !password) {
+                return res.status(401).json({ message: 'Usuário não autenticado.' });
+            }
+
+            await this.service.selfDelete(req.user.id, password);
+
+            return res.status(200).json({ message: 'Conta removida com sucesso.' });
+        } catch (err: any) {
+            console.error(err);
+            return res.status(400).json({ message: err.message || 'Erro ao deletar usuário' });
         }
     };
 

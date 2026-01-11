@@ -14,5 +14,6 @@ usersRouter.get('/:id', authorizeRoles('administrator', 'god'), controller.getBy
 usersRouter.post('/create', authorizeRoles('administrator', 'god'), controller.create);
 usersRouter.patch('/me/preferences', controller.updateMyPreferences);
 usersRouter.patch('/me/password', controller.changeMyPassword);
+usersRouter.delete('/me/delete', authorizeRoles('user', 'administrator', 'god'), controller.selfDelete);
 usersRouter.put('/:id', authorizeRoles('administrator', 'god'), controller.update);
 usersRouter.delete('/:id', authorizeRoles('administrator', 'god'), controller.delete);
