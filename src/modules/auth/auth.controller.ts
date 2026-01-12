@@ -13,7 +13,15 @@ export class AuthController {
                 return res.status(400).json({ message: 'Email e senha são obrigatórios' });
             }
 
-            const result = await this.service.login({ email, password });
+            const result = await this.service.login({
+                email,
+                password,
+                ...(req.ip && { ip: req.ip }),
+                ...(typeof req.headers['user-agent'] === 'string' && {
+                    userAgent: req.headers['user-agent'],
+                }),
+            });
+
             return res.json(result);
         } catch (error: any) {
             return res.status(401).json({ message: error.message });

@@ -2,17 +2,44 @@ import { RefreshToken } from '../../../generated/prisma/client';
 import { prisma } from '../../../prisma';
 
 export class RefreshTokenRepository {
-    async create(data: {
+    create(data: {
         userId: string;
         token: string;
         expiresAt: Date;
-    }): Promise<RefreshToken> {
-        return prisma.refreshToken.create({ data });
+        ipAddress?: string;
+        userAgent?: string;
+    }) {
+        return prisma.refreshToken.create({
+            data,
+        });
     }
+
 
     async findByToken(token: string): Promise<RefreshToken | null> {
         return prisma.refreshToken.findUnique({
             where: { token },
+        });
+    }
+
+    async findActiveByUser(userId: string) {
+        const now = new Date();
+
+        return prisma.refreshToken.findMany({
+            where: {
+                userId,
+                revoked: false,
+                expiresAt: { gt: now },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+            select: {
+                id: true,
+                createdAt: true,
+                expiresAt: true,
+                userAgent: true,
+                ipAddress: true,
+            },
         });
     }
 
@@ -25,6 +52,13 @@ export class RefreshTokenRepository {
             data: {
                 revoked: true,
             },
+        });
+    }
+
+    async revokeById(id: string): Promise<void> {
+        await prisma.refreshToken.update({
+            where: { id },
+            data: { revoked: true },
         });
     }
 

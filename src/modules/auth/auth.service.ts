@@ -7,6 +7,8 @@ import type { User } from '../../generated/prisma/client';
 interface LoginInput {
     email: string;
     password: string;
+    ip?: string;
+    userAgent?: string;
 }
 
 interface AuthResponse {
@@ -42,7 +44,7 @@ export class AuthService {
         );
     }
 
-    async login({ email, password }: LoginInput): Promise<AuthResponse> {
+    async login({ email, password, ip, userAgent, }: LoginInput): Promise<AuthResponse> {
         const user = await this.userRepo.findByEmail(email);
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -55,7 +57,11 @@ export class AuthService {
         await this.refreshTokenRepo.create({
             userId: user.id,
             token: refreshToken,
-            expiresAt: new Date(Date.now() + this.refreshExpiresInSeconds * 1000),
+            expiresAt: new Date(
+                Date.now() + this.refreshExpiresInSeconds * 1000
+            ),
+            ...(ip && { ipAddress: ip }),
+            ...(userAgent && { userAgent }),
         });
 
         const { password: _, ...userWithoutPassword } = user;

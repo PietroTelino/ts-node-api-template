@@ -51,5 +51,8 @@ model RefreshToken {
     expiresAt DateTime
     revoked   Boolean   @default(false)
 
+    userAgent String?  @map("user_agent")
+    ipAddress String?  @map("ip_address")
+
     @@map("refresh_tokens")
 }
