@@ -20,7 +20,6 @@ interface AuthResponse {
 export class AuthService {
     private userRepo = new UserRepository();
     private refreshTokenRepo = new RefreshTokenRepository();
-
     private accessSecret = process.env.JWT_SECRET!;
     private refreshSecret = process.env.JWT_REFRESH_SECRET!;
     private accessExpiresInSeconds = Number(process.env.JWT_EXPIRES_IN_SECONDS ?? 900);
@@ -49,6 +48,10 @@ export class AuthService {
 
         if (!user || !(await bcrypt.compare(password, user.password))) {
             throw new Error('Credenciais inválidas');
+        }
+
+        if (user.inactivatedAt) {
+            throw new Error('Usuário inativo. Entre em contato com o administrador.');
         }
 
         const accessToken = this.generateAccessToken(user);
@@ -92,11 +95,7 @@ export class AuthService {
 
         const tokenRecord = await this.refreshTokenRepo.findByToken(refreshToken);
 
-        if (
-            !tokenRecord ||
-            tokenRecord.revoked ||
-            tokenRecord.expiresAt < new Date()
-        ) {
+        if (!tokenRecord || tokenRecord.revoked || tokenRecord.expiresAt < new Date()) {
             throw new Error('Refresh token inválido');
         }
 
@@ -104,6 +103,10 @@ export class AuthService {
 
         if (!user) {
             throw new Error('Usuário não encontrado');
+        }
+
+        if (user.inactivatedAt) {
+            throw new Error('Usuário inativo. Entre em contato com o administrador.');
         }
 
         await this.refreshTokenRepo.revoke(refreshToken);

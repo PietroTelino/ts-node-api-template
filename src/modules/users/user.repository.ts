@@ -60,9 +60,7 @@ export class UserRepository {
     async updatePassword(id: string, hashedPassword: string): Promise<User> {
         return prisma.user.update({
             where: { id },
-            data: {
-                password: hashedPassword,
-            },
+            data: { password: hashedPassword },
         });
     }
 
@@ -70,6 +68,20 @@ export class UserRepository {
         return prisma.user.update({
             where: { id },
             data: { preferences },
+        });
+    }
+
+    async inactivate(id: string): Promise<User> {
+        return prisma.user.update({
+            where: { id },
+            data: { inactivatedAt: new Date() },
+        });
+    }
+
+    async reactivate(id: string): Promise<User> {
+        return prisma.user.update({
+            where: { id },
+            data: { inactivatedAt: null },
         });
     }
 }

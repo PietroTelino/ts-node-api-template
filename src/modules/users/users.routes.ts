@@ -17,3 +17,6 @@ usersRouter.patch('/me/password', authorizeRoles('user', 'administrator', 'god')
 usersRouter.delete('/me/delete', authorizeRoles('user', 'administrator', 'god'), controller.selfDelete);
 usersRouter.put('/:id', authorizeRoles('administrator', 'god'), controller.update);
 usersRouter.delete('/:id', authorizeRoles('administrator', 'god'), controller.delete);
+usersRouter.patch('/:id/inactivate', authorizeRoles('administrator', 'god'), controller.inactivateUser);
+usersRouter.patch('/:id/reactivate', authorizeRoles('administrator', 'god'), controller.reactivateUser);
+usersRouter.post('/:id/reset-password', authorizeRoles('administrator', 'god'), controller.adminResetPassword);

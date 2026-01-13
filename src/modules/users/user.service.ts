@@ -3,25 +3,25 @@ import type { User } from '../../generated/prisma/client';
 import bcrypt from 'bcrypt';
 import { validatePasswordOrThrow } from './policies/password.policy';
 import { validateEmailOrThrow } from './policies/email.policy';
-import { RefreshTokenRepository } from '../auth/tokens/refresh-token.repository'
+import { RefreshTokenRepository } from '../auth/tokens/refresh-token.repository';
+import { EmailService } from '../notifications/email.service';
 
 type Theme = 'light' | 'dark';
 
 export class UserService {
     private repo = new UserRepository();
+    private emailService = new EmailService();
 
     async register(input: { name: string; email: string; password: string; preferences?: any }) {
         validateEmailOrThrow(input.email);
         validatePasswordOrThrow(input.password);
 
         const exists = await this.repo.findByEmail(input.email);
-
         if (exists) {
             throw new Error('Email already in use');
         }
 
         const hashedPassword = await bcrypt.hash(input.password, 10);
-
         const user = await this.repo.create({
             ...input,
             password: hashedPassword,
@@ -131,5 +131,84 @@ export class UserService {
         await this.repo.updatePreferences(id, newPreferences);
 
         return { preferences: { theme } };
+    }
+
+    async inactivateUser(targetUserId: string): Promise<void> {
+        const user = await this.repo.findById(targetUserId);
+
+        if (!user) {
+            throw new Error('Usuário não encontrado');
+        }
+
+        if (user.role === 'god') {
+            throw new Error('Não é possível desativar um usuário GOD');
+        }
+
+        if (user.inactivatedAt) {
+            throw new Error('Usuário já está inativado');
+        }
+
+        await this.repo.inactivate(targetUserId);
+
+        const refreshTokenRepo = new RefreshTokenRepository();
+        await refreshTokenRepo.revokeAllByUser(targetUserId);
+    }
+
+    async reactivateUser(targetUserId: string): Promise<void> {
+        const user = await this.repo.findById(targetUserId);
+
+        if (!user) {
+            throw new Error('Usuário não encontrado');
+        }
+
+        if (!user.inactivatedAt) {
+            throw new Error('Usuário já está ativo');
+        }
+
+        await this.repo.reactivate(targetUserId);
+    }
+
+    private generateRandomPassword(): string {
+        const length = 8;
+        const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const numbers = '0123456789';
+        const specialChars = '!@#$%&*()_+=-[]{}|;:,.<>?';
+
+        let password = '';
+        password += specialChars[Math.floor(Math.random() * specialChars.length)];
+        password += lowercase[Math.floor(Math.random() * lowercase.length)];
+        password += uppercase[Math.floor(Math.random() * uppercase.length)];
+        password += numbers[Math.floor(Math.random() * numbers.length)];
+
+        const allChars = lowercase + uppercase + numbers + specialChars;
+
+        for (let i = password.length; i < length; i++) {
+            password += allChars[Math.floor(Math.random() * allChars.length)];
+        }
+
+        return password.split('').sort(() => Math.random() - 0.5).join('');
+    }
+
+    async adminResetPassword(targetUserId: string): Promise<void> {
+        const user = await this.repo.findById(targetUserId);
+
+        if (!user) {
+            throw new Error('Usuário não encontrado');
+        }
+
+        if (user.role === 'god') {
+            throw new Error('Não é possível resetar a senha de um usuário GOD');
+        }
+
+        const newPassword = this.generateRandomPassword();
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await this.repo.updatePassword(targetUserId, hashedPassword);
+
+        const refreshTokenRepo = new RefreshTokenRepository();
+        await refreshTokenRepo.revokeAllByUser(targetUserId);
+
+        await this.emailService.sendPasswordResetByAdminEmail(user.email, newPassword);
     }
 }
