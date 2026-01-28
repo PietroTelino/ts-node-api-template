@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LogoutService } from './logout.service';
+import { AuditService } from '../audit/audit.service';
 
 export class AuthController {
     private service = new AuthService();
+    private auditService = new AuditService();
 
     login = async (req: Request, res: Response) => {
         try {
@@ -21,6 +23,13 @@ export class AuthController {
                     userAgent: req.headers['user-agent'],
                 }),
             });
+
+            await this.auditService.logUserLogin(
+                result.user.id,
+                { email: result.user.email },
+                req.ip,
+                typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+            );
 
             return res.json(result);
         } catch (error: any) {
@@ -44,15 +53,20 @@ export class AuthController {
     };
 
     logout = async (req: Request, res: Response) => {
-        const refreshToken =
-            req.body.refreshToken ||
-            req.cookies?.refreshToken ||
-            req.headers['x-refresh-token'];
-
+        const refreshToken = req.body.refreshToken || req.cookies?.refreshToken || req.headers['x-refresh-token'];
         const service = new LogoutService();
         await service.execute(refreshToken);
 
         res.clearCookie('refreshToken');
+
+        if (req.user) {
+            await this.auditService.logUserLogout(
+                req.user.id,
+                req.ip,
+                typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+            );
+        }
+
         return res.status(204).send();
     };
 
@@ -63,6 +77,12 @@ export class AuthController {
 
         const service = new LogoutService();
         await service.logoutAll(req.user.id);
+
+        await this.auditService.logUserLogoutAll(
+            req.user.id,
+            req.ip,
+            typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+        );
 
         return res.status(204).send();
     };

@@ -8,21 +8,23 @@ datasource db {
 }
 
 model User {
-    id            String    @id @default(uuid()) @db.Uuid
-    name          String
-    email         String    @unique
-    password      String
-    role          String    @default("user")
+    id              String          @id @default(uuid()) @db.Uuid
+    name            String
+    email           String          @unique
+    password        String
+    role            String          @default("user")
 
-    inactivatedAt DateTime? @map("inactivated_at")
-    deletedAt     DateTime? @map("deleted_at")
-    createdAt     DateTime  @default(now()) @map("created_at")
-    updatedAt     DateTime  @updatedAt      @map("updated_at")
+    inactivatedAt   DateTime?       @map("inactivated_at")
+    deletedAt       DateTime?       @map("deleted_at")
+    createdAt       DateTime        @default(now()) @map("created_at")
+    updatedAt       DateTime        @updatedAt      @map("updated_at")
 
-    preferences   Json?     @map("preferences")
+    preferences     Json?           @map("preferences")
 
-    passwordResets PasswordReset[]
-    refreshTokens RefreshToken[]
+    passwordResets  PasswordReset[] 
+    refreshTokens   RefreshToken[]
+    auditLogs       AuditLog[]      @relation("UserAudits")
+    performedAudits AuditLog[]      @relation("PerformedByAudits")
 
     @@map("users")
 }
@@ -55,4 +57,26 @@ model RefreshToken {
     ipAddress String?  @map("ip_address")
 
     @@map("refresh_tokens")
+}
+
+model AuditLog {
+    id              String   @id @default(uuid()) @db.Uuid
+    userId          String?  @map("user_id") @db.Uuid
+    user            User?    @relation("UserAudits", fields: [userId], references: [id], onDelete: SetNull)
+    performedById   String?  @map("performed_by_id") @db.Uuid
+    performedBy     User?    @relation("PerformedByAudits", fields: [performedById], references: [id], onDelete: SetNull)
+    action          String
+    entity          String
+    entityId        String?  @map("entity_id") @db.Uuid
+    details         Json?
+    ipAddress       String?  @map("ip_address")
+    userAgent       String?  @map("user_agent")
+    createdAt       DateTime @default(now()) @map("created_at")
+
+    @@map("audit_logs")
+    @@index([userId])
+    @@index([performedById])
+    @@index([action])
+    @@index([entity])
+    @@index([createdAt])
 }

@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { SessionService } from './sessions.service';
+import { AuditService } from '../../audit/audit.service';
 
 export class SessionController {
     private service = new SessionService();
+    private auditService = new AuditService();
 
     listMySessions = async (req: Request, res: Response) => {
         try {
@@ -30,6 +32,14 @@ export class SessionController {
             }
 
             await this.service.logoutSession(req.user.id, sessionId);
+
+            await this.auditService.logSessionLogout(
+                req.user.id,
+                { sessionId },
+                req.ip,
+                typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+            );
+
             return res.status(200).json({ message: 'A sessão foi finalizada com sucesso.' });
         } catch (error: any) {
             return res.status(401).json({ message: error.message });

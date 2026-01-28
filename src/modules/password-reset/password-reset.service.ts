@@ -9,7 +9,6 @@ export class PasswordResetService {
     private userRepo = new UserRepository();
     private passwordResetRepo = new PasswordResetRepository();
     private emailService = new EmailService();
-
     private resetTokenExpiresInMs = Number(process.env.PASSWORD_RESET_EXPIRES_MS ?? 1000 * 60 * 60);
     private frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
 
@@ -30,11 +29,11 @@ export class PasswordResetService {
         await this.emailService.sendPasswordResetEmail(user.email, resetLink);
     }
 
-    async resetPassword(token: string, newPassword: string): Promise<void> {
+    async resetPassword(token: string, newPassword: string): Promise<{ userId: string; email: string } | null> {
         const record = await this.passwordResetRepo.findValidByToken(token);
 
         if (!record) {
-            throw new Error('Token invalido ou expirado');
+            throw new Error('Token inválido ou expirado');
         }
 
         validatePasswordOrThrow(newPassword);
@@ -43,5 +42,10 @@ export class PasswordResetService {
 
         await this.userRepo.updatePassword(record.userId, hashedPassword);
         await this.passwordResetRepo.markAsUsed(record.id);
+
+        return {
+            userId: record.user.id,
+            email: record.user.email,
+        };
     }
 }

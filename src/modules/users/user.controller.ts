@@ -1,22 +1,27 @@
 import { Request, Response } from 'express';
 import { UserService } from './user.service';
-import bcrypt from 'bcrypt';
-import { validatePasswordOrThrow } from './policies/password.policy';
+import { AuditService } from '../audit/audit.service';
 
 export class UserController {
     private service = new UserService();
+    private auditService = new AuditService();
 
     register = async (req: Request, res: Response) => {
         try {
             const { name, email, password, preferences } = req.body;
 
             if (!name || !email || !password) {
-                return res.status(400).json({
-                    message: 'name, email e password são obrigatórios.',
-                });
+                return res.status(400).json({ message: 'name, email e password são obrigatórios.' });
             }
 
             const user = await this.service.register({ name, email, password, preferences });
+
+            await this.auditService.logUserRegister(
+                user.id,
+                { email: user.email },
+                req.ip,
+                typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+            );
 
             return res.status(201).json(user);
         } catch (error: any) {
@@ -66,6 +71,16 @@ export class UserController {
 
             const user = await this.service.create({ name, email, password, role, preferences });
 
+            if (req.user) {
+                await this.auditService.logUserCreate(
+                    user.id,
+                    req.user.id,
+                    { email: user.email, role: user.role },
+                    req.ip,
+                    typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+                );
+            }
+
             return res.status(201).json(user);
         } catch (error: any) {
             console.error(error);
@@ -82,8 +97,21 @@ export class UserController {
             }
 
             const { name, email } = req.body;
+            const fields = [];
+            if (name) fields.push('name');
+            if (email) fields.push('email');
 
             const user = await this.service.update(id, { name, email });
+
+            if (req.user) {
+                await this.auditService.logUserUpdate(
+                    id,
+                    req.user.id,
+                    { fields },
+                    req.ip,
+                    typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+                );
+            }
 
             return res.json(user);
         } catch (error: any) {
@@ -102,6 +130,12 @@ export class UserController {
 
             await this.service.changeMyPassword(req.user.id, currentPassword, newPassword);
 
+            await this.auditService.logPasswordChange(
+                req.user.id,
+                req.ip,
+                typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+            );
+
             return res.status(200).json({ message: 'Senha alterada com sucesso.' });
         } catch (error: any) {
             console.error(error);
@@ -117,7 +151,20 @@ export class UserController {
                 return res.status(401).json({ message: 'Usuário não autenticado.' });
             }
 
+            const user = await this.service.getById(req.user.id);
+
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            }
+
             await this.service.selfDelete(req.user.id, password);
+
+            await this.auditService.logUserSelfDelete(
+                req.user.id,
+                { email: user.email },
+                req.ip,
+                typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+            );
 
             return res.status(200).json({ message: 'Conta removida com sucesso.' });
         } catch (error: any) {
@@ -134,7 +181,25 @@ export class UserController {
                 return res.status(400).json({ message: 'ID do usuário é obrigatório' });
             }
 
-            await this.service.delete(id);
+            const user = await this.service.getById(id);
+
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            }
+
+            // await this.service.delete(id);
+            console.log(req.user);
+
+            if (req.user) {
+                console.log('entra aqui pra logar o usuário q foi deletado em UserController');
+                await this.auditService.logUserDelete(
+                    id,
+                    req.user.id,
+                    { email: user.email },
+                    req.ip,
+                    typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+                );
+            }
 
             return res.status(204).send();
         } catch (error: any) {
@@ -157,6 +222,13 @@ export class UserController {
 
             const result = await this.service.updateMyTheme(req.user.id, theme);
 
+            await this.auditService.logPreferencesUpdate(
+                req.user.id,
+                { preferences: { theme } },
+                req.ip,
+                typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+            );
+
             return res.json(result);
         } catch (error: any) {
             console.error(error);
@@ -172,7 +244,23 @@ export class UserController {
                 return res.status(400).json({ message: 'ID do usuário é obrigatório' });
             }
 
+            const user = await this.service.getById(id);
+
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            }
+
             await this.service.inactivateUser(id);
+
+            if (req.user) {
+                await this.auditService.logUserInactivate(
+                    id,
+                    req.user.id,
+                    { email: user.email },
+                    req.ip,
+                    typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+                );
+            }
 
             return res.status(200).json({ message: 'Usuário desativado com sucesso.' });
         } catch (error: any) {
@@ -189,7 +277,23 @@ export class UserController {
                 return res.status(400).json({ message: 'ID do usuário é obrigatório' });
             }
 
+            const user = await this.service.getById(id);
+
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            }
+
             await this.service.reactivateUser(id);
+
+            if (req.user) {
+                await this.auditService.logUserReactivate(
+                    id,
+                    req.user.id,
+                    { email: user.email },
+                    req.ip,
+                    typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+                );
+            }
 
             return res.status(200).json({ message: 'Usuário reativado com sucesso.' });
         } catch (error: any) {
@@ -206,7 +310,23 @@ export class UserController {
                 return res.status(400).json({ message: 'ID do usuário é obrigatório' });
             }
 
+            const user = await this.service.getById(id);
+
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            }
+
             await this.service.adminResetPassword(id);
+
+            if (req.user) {
+                await this.auditService.logPasswordAdminReset(
+                    id,
+                    req.user.id,
+                    { email: user.email },
+                    req.ip,
+                    typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
+                );
+            }
 
             return res.status(200).json({
                 message: 'Senha resetada com sucesso. Um e-mail foi enviado ao usuário com a nova senha.',
