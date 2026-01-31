@@ -40,6 +40,16 @@ export class UserController {
         }
     };
 
+    listDeleted = async (req: Request, res: Response) => {
+        try {
+            const users = await this.service.listDeleted();
+            return res.json(users);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Erro ao listar usuários deletados' });
+        }
+    };
+
     getById = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
@@ -187,11 +197,9 @@ export class UserController {
                 return res.status(404).json({ message: 'Usuário não encontrado' });
             }
 
-            // await this.service.delete(id);
-            console.log(req.user);
+            await this.service.delete(id);
 
             if (req.user) {
-                console.log('entra aqui pra logar o usuário q foi deletado em UserController');
                 await this.auditService.logUserDelete(
                     id,
                     req.user.id,
@@ -201,7 +209,7 @@ export class UserController {
                 );
             }
 
-            return res.status(204).send();
+            return res.status(200).json({ message: 'Conta removida com sucesso.' });
         } catch (error: any) {
             console.error(error);
             return res.status(400).json({ message: error.message || 'Erro ao deletar usuário' });
@@ -334,6 +342,76 @@ export class UserController {
         } catch (error: any) {
             console.error(error);
             return res.status(400).json({ message: error.message || 'Erro ao resetar senha' });
+        }
+    };
+
+    restoreUser = async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+
+            if (!id) {
+                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+            }
+
+            await this.service.restore(id);
+
+            if (req.user) {
+                const user = await this.service.getById(id);
+
+                if (user) {
+                    await this.auditService.log({
+                        userId: id,
+                        performedById: req.user.id,
+                        action: 'USER_RESTORE',
+                        entity: 'USER',
+                        entityId: id,
+                        details: { email: user.email },
+                        ...(req.ip && { ipAddress: req.ip }),
+                        ...(typeof req.headers['user-agent'] === 'string' && { userAgent: req.headers['user-agent'] }),
+                    });
+                }
+            }
+
+            return res.status(200).json({ message: 'Usuário restaurado com sucesso.' });
+        } catch (error: any) {
+            console.error(error);
+            return res.status(400).json({ message: error.message || 'Erro ao restaurar usuário' });
+        }
+    };
+
+    hardDelete = async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+
+            if (!id) {
+                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+            }
+
+            const user = await this.service.getById(id);
+
+            if (!user) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            }
+
+            await this.service.hardDelete(id);
+
+            if (req.user) {
+                await this.auditService.log({
+                    userId: id,
+                    performedById: req.user.id,
+                    action: 'USER_HARD_DELETE',
+                    entity: 'USER',
+                    entityId: id,
+                    details: { email: user.email },
+                    ...(req.ip && { ipAddress: req.ip }),
+                    ...(typeof req.headers['user-agent'] === 'string' && { userAgent: req.headers['user-agent'] }),
+                });
+            }
+
+            return res.status(204).send();
+        } catch (error: any) {
+            console.error(error);
+            return res.status(400).json({ message: error.message || 'Erro ao deletar usuário permanentemente' });
         }
     };
 }

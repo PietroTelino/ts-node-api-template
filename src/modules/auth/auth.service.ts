@@ -45,9 +45,13 @@ export class AuthService {
 
     async login({ email, password, ip, userAgent, }: LoginInput): Promise<AuthResponse> {
         const user = await this.userRepo.findByEmail(email);
-
+        
         if (!user || !(await bcrypt.compare(password, user.password))) {
             throw new Error('Credenciais inválidas');
+        }
+
+        if (user.deletedAt) {
+            throw new Error('Esta conta foi removida.');
         }
 
         if (user.inactivatedAt) {
@@ -94,8 +98,11 @@ export class AuthService {
         }
 
         const tokenRecord = await this.refreshTokenRepo.findByToken(refreshToken);
-
-        if (!tokenRecord || tokenRecord.revoked || tokenRecord.expiresAt < new Date()) {
+        if (
+            !tokenRecord ||
+            tokenRecord.revoked ||
+            tokenRecord.expiresAt < new Date()
+        ) {
             throw new Error('Refresh token inválido');
         }
 
@@ -103,6 +110,10 @@ export class AuthService {
 
         if (!user) {
             throw new Error('Usuário não encontrado');
+        }
+
+        if (user.deletedAt) {
+            throw new Error('Esta conta foi removida.');
         }
 
         if (user.inactivatedAt) {

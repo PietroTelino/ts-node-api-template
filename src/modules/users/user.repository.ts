@@ -6,7 +6,25 @@ export type SafeUser = Omit<User, 'password' | 'preferences'>;
 export class UserRepository {
     async findAll(): Promise<SafeUser[]> {
         return prisma.user.findMany({
+            where: { deletedAt: null },
             orderBy: { createdAt: 'asc' },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                inactivatedAt: true,
+                deletedAt: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+    }
+
+    async findAllDeleted(): Promise<SafeUser[]> {
+        return prisma.user.findMany({
+            where: { deletedAt: { not: null } },
+            orderBy: { deletedAt: 'desc' },
             select: {
                 id: true,
                 name: true,
@@ -32,7 +50,13 @@ export class UserRepository {
         });
     }
 
-    async create(data: { name: string; email: string; password: string; role?: string; preferences?: any }): Promise<User> {
+    async create(data: {
+        name: string;
+        email: string;
+        password: string;
+        role?: string;
+        preferences?: any;
+    }): Promise<User> {
         return prisma.user.create({
             data: {
                 name: data.name,
@@ -52,6 +76,26 @@ export class UserRepository {
     }
 
     async delete(id: string): Promise<void> {
+        await prisma.user.delete({
+            where: { id },
+        });
+    }
+
+    async softDelete(id: string): Promise<User> {
+        return prisma.user.update({
+            where: { id },
+            data: { deletedAt: new Date() },
+        });
+    }
+
+    async restore(id: string): Promise<User> {
+        return prisma.user.update({
+            where: { id },
+            data: { deletedAt: null },
+        });
+    }
+
+    async hardDelete(id: string): Promise<void> {
         await prisma.user.delete({
             where: { id },
         });

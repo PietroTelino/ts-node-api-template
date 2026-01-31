@@ -38,6 +38,10 @@ export class UserService {
         return this.repo.findAll();
     }
 
+    listDeleted(): Promise<SafeUser[]> {
+        return this.repo.findAllDeleted();
+    }
+
     getById(id: string): Promise<User | null> {
         return this.repo.findById(id);
     }
@@ -83,7 +87,6 @@ export class UserService {
         validatePasswordOrThrow(newPassword);
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
         await this.repo.updatePassword(userId, hashedPassword);
 
         const refreshTokenRepo = new RefreshTokenRepository();
@@ -103,11 +106,58 @@ export class UserService {
             throw new Error('A senha informada está incorreta');
         }
 
-        return this.repo.delete(id);
+        await this.repo.softDelete(id);
+
+        const refreshTokenRepo = new RefreshTokenRepository();
+        await refreshTokenRepo.revokeAllByUser(id);
     }
 
-    delete(id: string): Promise<void> {
-        return this.repo.delete(id);
+    async delete(id: string): Promise<void> {
+        const user = await this.repo.findById(id);
+
+        if (!user) {
+            throw new Error('Usuário não encontrado.');
+        }
+
+        if (user.deletedAt) {
+            throw new Error('Esta conta já foi removida.');
+        }
+
+        return this.repo.softDelete(id).then(() => {
+            const refreshTokenRepo = new RefreshTokenRepository();
+            return refreshTokenRepo.revokeAllByUser(id);
+        });
+    }
+
+    async restore(id: string): Promise<void> {
+        const user = await this.repo.findById(id);
+
+        if (!user) {
+            throw new Error('Usuário não encontrado');
+        }
+
+        if (!user.deletedAt) {
+            throw new Error('Usuário não está deletado');
+        }
+
+        await this.repo.restore(id);
+    }
+
+    async hardDelete(id: string): Promise<void> {
+        const user = await this.repo.findById(id);
+
+        if (!user) {
+            throw new Error('Usuário não encontrado');
+        }
+
+        if (user.role === 'god') {
+            throw new Error('Não é possível deletar permanentemente um usuário GOD');
+        }
+
+        const refreshTokenRepo = new RefreshTokenRepository();
+        await refreshTokenRepo.revokeAllByUser(id);
+
+        await this.repo.hardDelete(id);
     }
 
     async updateMyTheme(id: string, theme: Theme): Promise<{ preferences: { theme: Theme } }> {
