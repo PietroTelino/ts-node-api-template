@@ -25,6 +25,8 @@ export const env = {
     emailUser: process.env.EMAIL_USER,
     emailPassword: process.env.EMAIL_PASSWORD,
     emailFrom: process.env.EMAIL_FROM ?? 'no-reply@localhost',
+
+    frontendUrl: process.env.FRONTEND_URL,
 };
 
 if (!env.dbHost || !env.dbName || !env.dbUser || !env.dbPassword) {
