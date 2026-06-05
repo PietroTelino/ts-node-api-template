@@ -9,7 +9,7 @@ export class SessionController {
     listMySessions = async (req: Request, res: Response) => {
         try {
             if (!req.user) {
-                return res.status(401).json({ message: 'Não autenticado' });
+                return res.status(401).json({ message: req.t('auth.notAuthenticated') });
             }
 
             const sessions = await this.service.listMySessions(req.user.id);
@@ -22,13 +22,13 @@ export class SessionController {
     logoutSession = async (req: Request, res: Response) => {
         try {
             if (!req.user) {
-                return res.status(401).json({ message: 'Não autenticado' });
+                return res.status(401).json({ message: req.t('auth.notAuthenticated') });
             }
 
             const { sessionId } = req.params;
 
             if (!sessionId) {
-                return res.status(400).json({ message: 'sessionId é obrigatório' });
+                return res.status(400).json({ message: req.t('user.sessionRequired') });
             }
 
             await this.service.logoutSession(req.user.id, sessionId);
@@ -40,7 +40,7 @@ export class SessionController {
                 typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
             );
 
-            return res.status(200).json({ message: 'A sessão foi finalizada com sucesso.' });
+            return res.status(200).json({ message: req.t('user.sessionTerminated') });
         } catch (error: any) {
             return res.status(401).json({ message: error.message });
         }

@@ -5,6 +5,7 @@ import { validatePasswordOrThrow } from './policies/password.policy';
 import { validateEmailOrThrow } from './policies/email.policy';
 import { RefreshTokenRepository } from '../auth/tokens/refresh-token.repository';
 import { EmailService } from '../notifications/email.service';
+import { t } from '../../utils/t';
 
 type Theme = 'light' | 'dark';
 
@@ -18,7 +19,7 @@ export class UserService {
 
         const exists = await this.repo.findByEmail(input.email);
         if (exists) {
-            throw new Error('Email already in use');
+            throw new Error(t('user.emailInUse'));
         }
 
         const hashedPassword = await bcrypt.hash(input.password, 10);
@@ -48,7 +49,7 @@ export class UserService {
 
     async create(input: { name: string; email: string; password: string; role?: string; preferences?: any }): Promise<User> {
         if (!input.name || !input.email) {
-            throw new Error('Name e email são obrigatórios');
+            throw new Error(t('user.fieldRequired'));
         }
 
         validateEmailOrThrow(input.email);
@@ -75,13 +76,13 @@ export class UserService {
         const user = await this.repo.findById(userId);
 
         if (!user) {
-            throw new Error('Usuário não encontrado');
+            throw new Error(t('user.notFound'));
         }
 
         const passwordMatches = await bcrypt.compare(currentPassword, user.password);
 
         if (!passwordMatches) {
-            throw new Error('Senha atual incorreta');
+            throw new Error(t('user.currentPasswordWrong'));
         }
 
         validatePasswordOrThrow(newPassword);
@@ -97,13 +98,13 @@ export class UserService {
         const user = await this.getById(id);
 
         if (!user) {
-            throw new Error('Usuário não autenticado');
+            throw new Error(t('auth.notAuthenticated'));
         }
 
         const passwordMatches = await bcrypt.compare(password, user.password);
 
         if (!passwordMatches) {
-            throw new Error('A senha informada está incorreta');
+            throw new Error(t('user.incorrectPassword'));
         }
 
         await this.repo.softDelete(id);
@@ -116,11 +117,11 @@ export class UserService {
         const user = await this.repo.findById(id);
 
         if (!user) {
-            throw new Error('Usuário não encontrado.');
+            throw new Error(t('user.notFound'));
         }
 
         if (user.deletedAt) {
-            throw new Error('Esta conta já foi removida.');
+            throw new Error(t('user.alreadyDeleted'));
         }
 
         return this.repo.softDelete(id).then(() => {
@@ -133,11 +134,11 @@ export class UserService {
         const user = await this.repo.findById(id);
 
         if (!user) {
-            throw new Error('Usuário não encontrado');
+            throw new Error(t('user.notFound'));
         }
 
         if (!user.deletedAt) {
-            throw new Error('Usuário não está deletado');
+            throw new Error(t('user.notDeleted'));
         }
 
         await this.repo.restore(id);
@@ -147,11 +148,11 @@ export class UserService {
         const user = await this.repo.findById(id);
 
         if (!user) {
-            throw new Error('Usuário não encontrado');
+            throw new Error(t('user.notFound'));
         }
 
         if (user.role === 'god') {
-            throw new Error('Não é possível deletar permanentemente um usuário GOD');
+            throw new Error(t('user.cannotDeleteGod'));
         }
 
         const refreshTokenRepo = new RefreshTokenRepository();
@@ -162,13 +163,13 @@ export class UserService {
 
     async updateMyTheme(id: string, theme: Theme): Promise<{ preferences: { theme: Theme } }> {
         if (theme !== 'light' && theme !== 'dark') {
-            throw new Error('O tema deve ser light ou dark.');
+            throw new Error(t('user.invalidTheme'));
         }
 
         const user = await this.repo.findById(id);
 
         if (!user) {
-            throw new Error('Usuário não encontrado');
+            throw new Error(t('user.notFound'));
         }
 
         const currentPrefs = (user.preferences ?? {}) as Record<string, any>;
@@ -187,15 +188,15 @@ export class UserService {
         const user = await this.repo.findById(targetUserId);
 
         if (!user) {
-            throw new Error('Usuário não encontrado');
+            throw new Error(t('user.notFound'));
         }
 
         if (user.role === 'god') {
-            throw new Error('Não é possível desativar um usuário GOD');
+            throw new Error(t('user.cannotInactivateGod'));
         }
 
         if (user.inactivatedAt) {
-            throw new Error('Usuário já está inativado');
+            throw new Error(t('user.alreadyInactive'));
         }
 
         await this.repo.inactivate(targetUserId);
@@ -208,11 +209,11 @@ export class UserService {
         const user = await this.repo.findById(targetUserId);
 
         if (!user) {
-            throw new Error('Usuário não encontrado');
+            throw new Error(t('user.notFound'));
         }
 
         if (!user.inactivatedAt) {
-            throw new Error('Usuário já está ativo');
+            throw new Error(t('user.alreadyActive'));
         }
 
         await this.repo.reactivate(targetUserId);
@@ -244,11 +245,11 @@ export class UserService {
         const user = await this.repo.findById(targetUserId);
 
         if (!user) {
-            throw new Error('Usuário não encontrado');
+            throw new Error(t('user.notFound'));
         }
 
         if (user.role === 'god') {
-            throw new Error('Não é possível resetar a senha de um usuário GOD');
+            throw new Error(t('user.cannotResetGodPassword'));
         }
 
         const newPassword = this.generateRandomPassword();

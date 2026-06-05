@@ -3,6 +3,7 @@ import jwt, { SignOptions, JwtPayload } from 'jsonwebtoken';
 import { UserRepository } from '../users/user.repository';
 import { RefreshTokenRepository } from './tokens/refresh-token.repository';
 import type { User } from '../../generated/prisma/client';
+import { t } from '../../utils/t';
 
 interface LoginInput {
     email: string;
@@ -47,15 +48,15 @@ export class AuthService {
         const user = await this.userRepo.findByEmail(email);
         
         if (!user || !(await bcrypt.compare(password, user.password))) {
-            throw new Error('Credenciais inválidas');
+            throw new Error(t('auth.invalidCredentials'));
         }
 
         if (user.deletedAt) {
-            throw new Error('Esta conta foi removida.');
+            throw new Error(t('auth.accountDeleted'));
         }
 
         if (user.inactivatedAt) {
-            throw new Error('Usuário inativo. Entre em contato com o administrador.');
+            throw new Error(t('auth.accountInactive'));
         }
 
         const accessToken = this.generateAccessToken(user);
@@ -82,7 +83,7 @@ export class AuthService {
 
     async refresh(refreshToken: string): Promise<AuthResponse> {
         if (!refreshToken) {
-            throw new Error('Refresh token não fornecido');
+            throw new Error(t('auth.refreshTokenNotProvided'));
         }
 
         let payload: JwtPayload;
@@ -90,11 +91,11 @@ export class AuthService {
         try {
             payload = jwt.verify(refreshToken, this.refreshSecret) as JwtPayload;
         } catch {
-            throw new Error('Refresh token inválido ou expirado');
+            throw new Error(t('auth.refreshTokenInvalidOrExpired'));
         }
 
         if (!payload.sub) {
-            throw new Error('Refresh token malformado');
+            throw new Error(t('auth.refreshTokenMalformed'));
         }
 
         const tokenRecord = await this.refreshTokenRepo.findByToken(refreshToken);
@@ -103,21 +104,21 @@ export class AuthService {
             tokenRecord.revoked ||
             tokenRecord.expiresAt < new Date()
         ) {
-            throw new Error('Refresh token inválido');
+            throw new Error(t('auth.refreshTokenInvalid'));
         }
 
         const user = await this.userRepo.findById(String(payload.sub));
 
         if (!user) {
-            throw new Error('Usuário não encontrado');
+            throw new Error(t('user.notFound'));
         }
 
         if (user.deletedAt) {
-            throw new Error('Esta conta foi removida.');
+            throw new Error(t('user.accountDeleted'));
         }
 
         if (user.inactivatedAt) {
-            throw new Error('Usuário inativo. Entre em contato com o administrador.');
+            throw new Error(t('auth.accountInactive'));
         }
 
         await this.refreshTokenRepo.revoke(refreshToken);

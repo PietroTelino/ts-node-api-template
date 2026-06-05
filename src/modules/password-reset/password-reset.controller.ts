@@ -11,7 +11,7 @@ export class PasswordResetController {
             const { email } = req.body;
 
             if (!email) {
-                return res.status(400).json({ message: 'Email é obrigatório' });
+                return res.status(400).json({ message: req.t('password.emailRequired') });
             }
 
             await this.service.requestReset(email);
@@ -23,11 +23,11 @@ export class PasswordResetController {
             );
 
             return res.json({
-                message: 'Se o e-mail existir, você receberá instruções para redefinir a senha.',
+                message: req.t('password.resetEmailSent'),
             });
         } catch (error: any) {
             console.error(error);
-            return res.status(500).json({ message: 'Erro ao solicitar redefinição de senha' });
+            return res.status(500).json({ message: req.t('password.errorRequest') });
         }
     };
 
@@ -35,7 +35,7 @@ export class PasswordResetController {
         try {
             const { token, password } = req.body;
             if (!token || !password) {
-                return res.status(400).json({ message: 'Token e nova senha são obrigatórios' });
+                return res.status(400).json({ message: req.t('password.tokenPasswordRequired') });
             }
 
             const result = await this.service.resetPassword(token, password);
@@ -49,7 +49,7 @@ export class PasswordResetController {
                 );
             }
 
-            return res.json({ message: 'Senha redefinida com sucesso' });
+            return res.json({ message: req.t('password.resetSuccess') });
         } catch (error: any) {
             console.error(error);
             return res.status(400).json({ message: error.message });

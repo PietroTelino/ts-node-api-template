@@ -11,7 +11,7 @@ export class UserController {
             const { name, email, password, preferences } = req.body;
 
             if (!name || !email || !password) {
-                return res.status(400).json({ message: 'name, email e password são obrigatórios.' });
+                return res.status(400).json({ message: req.t('user.fieldRequired') });
             }
 
             const user = await this.service.register({ name, email, password, preferences });
@@ -26,7 +26,7 @@ export class UserController {
             return res.status(201).json(user);
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao registrar usuário' });
+            return res.status(400).json({ message: error.message || req.t('user.errorRegister') });
         }
     };
 
@@ -36,7 +36,7 @@ export class UserController {
             return res.json(users);
         } catch (err) {
             console.error(err);
-            return res.status(500).json({ message: 'Erro ao listar usuários' });
+            return res.status(500).json({ message: req.t('user.errorList') });
         }
     };
 
@@ -46,7 +46,7 @@ export class UserController {
             return res.json(users);
         } catch (err) {
             console.error(err);
-            return res.status(500).json({ message: 'Erro ao listar usuários deletados' });
+            return res.status(500).json({ message: req.t('user.errorListDeleted') });
         }
     };
 
@@ -55,19 +55,19 @@ export class UserController {
             const { id } = req.params;
 
             if (!id) {
-                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+                return res.status(400).json({ message: req.t('user.idRequired') });
             }
 
             const user = await this.service.getById(id);
 
             if (!user) {
-                return res.status(404).json({ message: 'Usuário não encontrado' });
+                return res.status(404).json({ message: req.t('user.notFound') });
             }
 
             return res.json(user);
         } catch (err) {
             console.error(err);
-            return res.status(500).json({ message: 'Erro ao buscar usuário' });
+            return res.status(500).json({ message: req.t('user.errorFind') });
         }
     };
 
@@ -76,7 +76,7 @@ export class UserController {
             const { name, email, password, role, preferences } = req.body;
 
             if (!name || !email || !password) {
-                return res.status(400).json({ message: 'name, email e password são obrigatórios.' });
+                return res.status(400).json({ message: req.t('user.fieldRequired') });
             }
 
             const user = await this.service.create({ name, email, password, role, preferences });
@@ -94,7 +94,7 @@ export class UserController {
             return res.status(201).json(user);
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao criar usuário' });
+            return res.status(400).json({ message: error.message || req.t('user.errorCreate') });
         }
     };
 
@@ -103,7 +103,7 @@ export class UserController {
             const { id } = req.params;
 
             if (!id) {
-                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+                return res.status(400).json({ message: req.t('user.idRequired') });
             }
 
             const { name, email } = req.body;
@@ -126,7 +126,7 @@ export class UserController {
             return res.json(user);
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao atualizar usuário' });
+            return res.status(400).json({ message: error.message || req.t('user.errorUpdate') });
         }
     };
 
@@ -135,7 +135,7 @@ export class UserController {
             const { currentPassword, newPassword } = req.body;
 
             if (!req.user || !currentPassword || !newPassword) {
-                return res.status(401).json({ message: 'Usuário não autenticado.' });
+                return res.status(401).json({ message: req.t('auth.notAuthenticated') });
             }
 
             await this.service.changeMyPassword(req.user.id, currentPassword, newPassword);
@@ -146,10 +146,10 @@ export class UserController {
                 typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
             );
 
-            return res.status(200).json({ message: 'Senha alterada com sucesso.' });
+            return res.status(200).json({ message: req.t('user.passwordChanged') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao alterar senha' });
+            return res.status(400).json({ message: error.message || req.t('user.errorChangePassword') });
         }
     };
 
@@ -158,13 +158,13 @@ export class UserController {
             const { password } = req.body;
 
             if (!req.user || !password) {
-                return res.status(401).json({ message: 'Usuário não autenticado.' });
+                return res.status(401).json({ message: req.t('user.notFound') });
             }
 
             const user = await this.service.getById(req.user.id);
 
             if (!user) {
-                return res.status(404).json({ message: 'Usuário não encontrado' });
+                return res.status(404).json({ message: req.t('user.notFound') });
             }
 
             await this.service.selfDelete(req.user.id, password);
@@ -176,10 +176,10 @@ export class UserController {
                 typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined
             );
 
-            return res.status(200).json({ message: 'Conta removida com sucesso.' });
+            return res.status(200).json({ message: req.t('user.accountRemoved') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao deletar usuário' });
+            return res.status(400).json({ message: error.message || req.t('user.errorDelete') });
         }
     };
 
@@ -188,13 +188,13 @@ export class UserController {
             const { id } = req.params;
 
             if (!id) {
-                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+                return res.status(400).json({ message: req.t('user.idRequired') });
             }
 
             const user = await this.service.getById(id);
 
             if (!user) {
-                return res.status(404).json({ message: 'Usuário não encontrado' });
+                return res.status(404).json({ message: req.t('user.notFound') });
             }
 
             await this.service.delete(id);
@@ -209,23 +209,23 @@ export class UserController {
                 );
             }
 
-            return res.status(200).json({ message: 'Conta removida com sucesso.' });
+            return res.status(200).json({ message: req.t('user.accountRemoved') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao deletar usuário' });
+            return res.status(400).json({ message: error.message || req.t('user.errorDelete') });
         }
     };
 
     updateMyPreferences = async (req: Request, res: Response) => {
         try {
             if (!req.user) {
-                return res.status(401).json({ message: 'Usuário não autenticado.' });
+                return res.status(401).json({ message: req.t('auth.notAuthenticated') });
             }
 
             const { theme } = req.body;
 
             if (!theme) {
-                return res.status(400).json({ message: 'O tema é obrigatório, podendo ser light ou dark.' });
+                return res.status(400).json({ message: req.t('user.themeRequired') });
             }
 
             const result = await this.service.updateMyTheme(req.user.id, theme);
@@ -240,7 +240,7 @@ export class UserController {
             return res.json(result);
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao atualizar preferências.' });
+            return res.status(400).json({ message: error.message || req.t('user.errorPreferences') });
         }
     };
 
@@ -249,13 +249,13 @@ export class UserController {
             const { id } = req.params;
 
             if (!id) {
-                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+                return res.status(400).json({ message: req.t('user.idRequired') });
             }
 
             const user = await this.service.getById(id);
 
             if (!user) {
-                return res.status(404).json({ message: 'Usuário não encontrado' });
+                return res.status(404).json({ message: req.t('user.notFound') });
             }
 
             await this.service.inactivateUser(id);
@@ -270,10 +270,10 @@ export class UserController {
                 );
             }
 
-            return res.status(200).json({ message: 'Usuário desativado com sucesso.' });
+            return res.status(200).json({ message: req.t('user.inactivated') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao desativar usuário' });
+            return res.status(400).json({ message: error.message || req.t('user.errorInactivate') });
         }
     };
 
@@ -282,13 +282,13 @@ export class UserController {
             const { id } = req.params;
 
             if (!id) {
-                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+                return res.status(400).json({ message: req.t('user.idRequired') });
             }
 
             const user = await this.service.getById(id);
 
             if (!user) {
-                return res.status(404).json({ message: 'Usuário não encontrado' });
+                return res.status(404).json({ message: req.t('user.notFound') });
             }
 
             await this.service.reactivateUser(id);
@@ -303,10 +303,10 @@ export class UserController {
                 );
             }
 
-            return res.status(200).json({ message: 'Usuário reativado com sucesso.' });
+            return res.status(200).json({ message: req.t('user.reactivated') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao reativar usuário' });
+            return res.status(400).json({ message: error.message || req.t('user.errorReactivate') });
         }
     };
 
@@ -315,13 +315,13 @@ export class UserController {
             const { id } = req.params;
 
             if (!id) {
-                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+                return res.status(400).json({ message: req.t('user.idRequired') });
             }
 
             const user = await this.service.getById(id);
 
             if (!user) {
-                return res.status(404).json({ message: 'Usuário não encontrado' });
+                return res.status(404).json({ message: req.t('user.notFound') });
             }
 
             await this.service.adminResetPassword(id);
@@ -337,11 +337,11 @@ export class UserController {
             }
 
             return res.status(200).json({
-                message: 'Senha resetada com sucesso. Um e-mail foi enviado ao usuário com a nova senha.',
+                message: req.t('user.passwordReset'),
             });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao resetar senha' });
+            return res.status(400).json({ message: error.message || req.t('user.errorResetPassword') });
         }
     };
 
@@ -350,7 +350,7 @@ export class UserController {
             const { id } = req.params;
 
             if (!id) {
-                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+                return res.status(400).json({ message: req.t('user.idRequired') });
             }
 
             await this.service.restore(id);
@@ -372,10 +372,10 @@ export class UserController {
                 }
             }
 
-            return res.status(200).json({ message: 'Usuário restaurado com sucesso.' });
+            return res.status(200).json({ message: req.t('user.restored') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao restaurar usuário' });
+            return res.status(400).json({ message: error.message || req.t('user.errorRestore') });
         }
     };
 
@@ -384,13 +384,13 @@ export class UserController {
             const { id } = req.params;
 
             if (!id) {
-                return res.status(400).json({ message: 'ID do usuário é obrigatório' });
+                return res.status(400).json({ message: req.t('user.idRequired') });
             }
 
             const user = await this.service.getById(id);
 
             if (!user) {
-                return res.status(404).json({ message: 'Usuário não encontrado' });
+                return res.status(404).json({ message: req.t('user.notFound') });
             }
 
             await this.service.hardDelete(id);
@@ -411,7 +411,7 @@ export class UserController {
             return res.status(204).send();
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || 'Erro ao deletar usuário permanentemente' });
+            return res.status(400).json({ message: error.message || req.t('user.errorHardDelete') });
         }
     };
 }

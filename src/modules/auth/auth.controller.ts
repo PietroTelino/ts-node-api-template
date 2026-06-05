@@ -12,7 +12,7 @@ export class AuthController {
             const { email, password } = req.body;
 
             if (!email || !password) {
-                return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+                return res.status(400).json({ message: req.t('auth.emailPasswordRequired') });
             }
 
             const result = await this.service.login({
@@ -42,7 +42,7 @@ export class AuthController {
             const { refreshToken } = req.body;
 
             if (!refreshToken) {
-                return res.status(400).json({ message: 'Refresh token é obrigatório' });
+                return res.status(400).json({ message: req.t('auth.refreshTokenRequired') });
             }
 
             const result = await this.service.refresh(refreshToken);
@@ -72,7 +72,7 @@ export class AuthController {
 
     logoutAll = async (req: Request, res: Response) => {
         if (!req.user) {
-            return res.status(401).json({ message: 'Não autenticado' });
+            return res.status(401).json({ message: req.t('auth.notAuthenticated') });
         }
 
         const service = new LogoutService();
