@@ -3,7 +3,6 @@ import jwt, { SignOptions, JwtPayload } from 'jsonwebtoken';
 import { UserRepository } from '../users/user.repository';
 import { RefreshTokenRepository } from './tokens/refresh-token.repository';
 import type { User } from '../../generated/prisma/client';
-import { t } from '../../utils/t';
 
 interface LoginInput {
     email: string;
@@ -44,19 +43,19 @@ export class AuthService {
         );
     }
 
-    async login({ email, password, ip, userAgent, }: LoginInput): Promise<AuthResponse> {
+    async login({ email, password, ip, userAgent }: LoginInput): Promise<AuthResponse> {
         const user = await this.userRepo.findByEmail(email);
         
         if (!user || !(await bcrypt.compare(password, user.password))) {
-            throw new Error(t('auth.invalidCredentials'));
+            throw new Error('auth.invalidCredentials');
         }
 
         if (user.deletedAt) {
-            throw new Error(t('auth.accountDeleted'));
+            throw new Error('auth.accountDeleted');
         }
 
         if (user.inactivatedAt) {
-            throw new Error(t('auth.accountInactive'));
+            throw new Error('auth.accountInactive');
         }
 
         const accessToken = this.generateAccessToken(user);
@@ -83,7 +82,7 @@ export class AuthService {
 
     async refresh(refreshToken: string): Promise<AuthResponse> {
         if (!refreshToken) {
-            throw new Error(t('auth.refreshTokenNotProvided'));
+            throw new Error('auth.refreshTokenNotProvided');
         }
 
         let payload: JwtPayload;
@@ -91,11 +90,11 @@ export class AuthService {
         try {
             payload = jwt.verify(refreshToken, this.refreshSecret) as JwtPayload;
         } catch {
-            throw new Error(t('auth.refreshTokenInvalidOrExpired'));
+            throw new Error('auth.refreshTokenInvalidOrExpired');
         }
 
         if (!payload.sub) {
-            throw new Error(t('auth.refreshTokenMalformed'));
+            throw new Error('auth.refreshTokenMalformed');
         }
 
         const tokenRecord = await this.refreshTokenRepo.findByToken(refreshToken);
@@ -104,21 +103,21 @@ export class AuthService {
             tokenRecord.revoked ||
             tokenRecord.expiresAt < new Date()
         ) {
-            throw new Error(t('auth.refreshTokenInvalid'));
+            throw new Error('auth.refreshTokenInvalid');
         }
 
         const user = await this.userRepo.findById(String(payload.sub));
 
         if (!user) {
-            throw new Error(t('user.notFound'));
+            throw new Error('user.notFound');
         }
 
         if (user.deletedAt) {
-            throw new Error(t('user.accountDeleted'));
+            throw new Error('user.accountDeleted');
         }
 
         if (user.inactivatedAt) {
-            throw new Error(t('auth.accountInactive'));
+            throw new Error('auth.accountInactive');
         }
 
         await this.refreshTokenRepo.revoke(refreshToken);

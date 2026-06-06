@@ -15,7 +15,7 @@ export class SessionController {
             const sessions = await this.service.listMySessions(req.user.id);
             return res.json(sessions);
         } catch (error: any) {
-            return res.status(401).json({ message: error.message });
+            return res.status(401).json({ message: req.t(error.message) });
         }
     };
 
@@ -42,7 +42,7 @@ export class SessionController {
 
             return res.status(200).json({ message: req.t('user.sessionTerminated') });
         } catch (error: any) {
-            return res.status(401).json({ message: error.message });
+            return res.status(401).json({ message: req.t(error.message) });
         }
     };
 }

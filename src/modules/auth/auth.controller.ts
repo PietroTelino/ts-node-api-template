@@ -33,7 +33,7 @@ export class AuthController {
 
             return res.json(result);
         } catch (error: any) {
-            return res.status(401).json({ message: error.message });
+            return res.status(401).json({ message: req.t(error.message) });
         }
     };
 
@@ -48,7 +48,7 @@ export class AuthController {
             const result = await this.service.refresh(refreshToken);
             return res.json(result);
         } catch (error: any) {
-            return res.status(401).json({ message: error.message });
+            return res.status(401).json({ message: req.t(error.message) });
         }
     };
 

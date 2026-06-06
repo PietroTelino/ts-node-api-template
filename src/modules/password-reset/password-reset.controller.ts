@@ -52,7 +52,7 @@ export class PasswordResetController {
             return res.json({ message: req.t('password.resetSuccess') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message });
+            return res.status(400).json({ message: req.t(error.message) });
         }
     };
 }

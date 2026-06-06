@@ -4,7 +4,6 @@ import { UserRepository } from '../users/user.repository';
 import { PasswordResetRepository } from './password-reset.repository';
 import { EmailService } from '../notifications/email.service';
 import { validatePasswordOrThrow } from '../users/policies/password.policy';
-import { t } from '../../utils/t';
 
 export class PasswordResetService {
     private userRepo = new UserRepository();
@@ -34,7 +33,7 @@ export class PasswordResetService {
         const record = await this.passwordResetRepo.findValidByToken(token);
 
         if (!record) {
-            throw new Error(t('password.invalidOrExpiredToken'));
+            throw new Error('password.invalidOrExpiredToken');
         }
 
         validatePasswordOrThrow(newPassword);

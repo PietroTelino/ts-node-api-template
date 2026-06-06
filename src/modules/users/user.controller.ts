@@ -26,7 +26,7 @@ export class UserController {
             return res.status(201).json(user);
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorRegister') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorRegister') });
         }
     };
 
@@ -94,7 +94,7 @@ export class UserController {
             return res.status(201).json(user);
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorCreate') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorCreate') });
         }
     };
 
@@ -126,7 +126,7 @@ export class UserController {
             return res.json(user);
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorUpdate') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorUpdate') });
         }
     };
 
@@ -149,7 +149,7 @@ export class UserController {
             return res.status(200).json({ message: req.t('user.passwordChanged') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorChangePassword') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorChangePassword') });
         }
     };
 
@@ -179,7 +179,7 @@ export class UserController {
             return res.status(200).json({ message: req.t('user.accountRemoved') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorDelete') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorDelete') });
         }
     };
 
@@ -212,7 +212,7 @@ export class UserController {
             return res.status(200).json({ message: req.t('user.accountRemoved') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorDelete') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorDelete') });
         }
     };
 
@@ -240,7 +240,7 @@ export class UserController {
             return res.json(result);
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorPreferences') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorPreferences') });
         }
     };
 
@@ -273,7 +273,7 @@ export class UserController {
             return res.status(200).json({ message: req.t('user.inactivated') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorInactivate') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorInactivate') });
         }
     };
 
@@ -306,7 +306,7 @@ export class UserController {
             return res.status(200).json({ message: req.t('user.reactivated') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorReactivate') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorReactivate') });
         }
     };
 
@@ -341,7 +341,7 @@ export class UserController {
             });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorResetPassword') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorResetPassword') });
         }
     };
 
@@ -375,7 +375,7 @@ export class UserController {
             return res.status(200).json({ message: req.t('user.restored') });
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorRestore') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorRestore') });
         }
     };
 
@@ -411,7 +411,7 @@ export class UserController {
             return res.status(204).send();
         } catch (error: any) {
             console.error(error);
-            return res.status(400).json({ message: error.message || req.t('user.errorHardDelete') });
+            return res.status(400).json({ message: req.t(error.message) || req.t('user.errorHardDelete') });
         }
     };
 }
